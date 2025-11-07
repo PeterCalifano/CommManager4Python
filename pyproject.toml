@@ -1,25 +1,22 @@
 [build-system]
-requires = [""]
-build-backend = ""
+requires = ["hatchling", "hatch-vcs"]
+build-backend = "hatchling.build"
 
 [project]
 name =  "CommManager4Python"
 authors = [
     {name = "Pietro Califano", email = "petercalifano.gs@gmail.com"},
 ]
-description = "Sample Python Project for creating a new Python Module"
+description = "A library implementing python classes and tools to manage communications between hosts using tcp and udp protocols, ros2 and protobuf."
 readme = "README.md"
 classifiers = [
-    "Development Status :: 3 - Alpha",
     "Intended Audience :: Developers",
     "License :: OSI Approved :: MIT License",
     "Programming Language :: Python :: 3 :: Only",
-    "Programming Language :: Python :: 3.8",
-    "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11"
 ]
-requires-python = ">=3.8.1"
+requires-python = ">=3.10"
 dynamic = ["version"]
 
 [project.optional-dependencies]
@@ -51,8 +48,39 @@ Documentation = "https://github.com/microsoft/python-package-template/tree/main#
 Source = "https://github.com/microsoft/python-package-template"
 Tracker = "https://github.com/microsoft/python-package-template/issues"
 
+#mypy configuration
+[tool.mypy]
+files = [""]  
+ignore_missing_imports = true  # Ignore type errors from external libraries
+exclude = [
+    "site-packages/.*",
+    ".venv/.*",
+    "env/.*",
+    "dist/.*",
+    "build/.*",
+    "deprecated/.*",
+    "cache/.*",
+    "data/.*"
+]
+warn_unused_ignores = true
+warn_redundant_casts = true
+warn_return_any = true
+warn_unreachable = true
+disallow_untyped_defs = false  # Enforce type checking on all function definitions
+disallow_untyped_decorators = true  # Ensure decorators are typed
+strict = false
+cache_dir = ".mypy_cache"
+allow_redefinition = true
+warn_unused_configs = true
+show_error_codes = true
+show_column_numbers = true
+check_untyped_defs = true
+follow_imports = "normal"
+local_partial_types = true
+enable_error_code = "possibly-undefined"
+
 [tool.flit.module]
-name = "python_package"
+name = "CommManager4Python"
 
 [tool.bandit]
 exclude_dirs = ["build","dist","tests","scripts"]
@@ -64,11 +92,18 @@ targets = "src"
 line-length = 120
 fast = true
 
+# Adding configuration for test coverage
 [tool.coverage.run]
 branch = true
+source = ["."]
+omit = [".*"]  # Excludes any hidden folder
 
 [tool.coverage.report]
-fail_under = 100
+show_missing = true
+fail_under = 95
+
+[tool.coverage.html]
+directory = "coverage_html_report"
 
 [tool.flake8]
 max-line-length = 120
@@ -110,12 +145,16 @@ executionEnvironments = [
   { root = "src" }
 ]
 
+# pytest configuration
 [tool.pytest.ini_options]
-addopts = "--cov-report xml:coverage.xml --cov src --cov-fail-under 0 --cov-append -m 'not integration'"
+addopts = "--cov-report xml:coverage.xml --cov src --cov-fail-under 0 --cov-append -m 'not integration' --ignore=lib/ --maxfail=10 -rf --disable-warnings"
 pythonpath = [
   "src"
 ]
-testpaths = "tests"
+testpaths = ["tests"]
+python_files = ["test*.py"]
+python_functions = ["test*", "*test"]
+console_output_style = "count"
 junit_family = "xunit2"
 markers = [
     "integration: marks as integration test",
@@ -125,6 +164,9 @@ markers = [
     "slow: marks tests as slow",
     "unit: fast offline tests",
 ]
+# Specify folders to ignore
+norecursedirs = ["*deprecated*", "*data", "*cache", "**/site-packages", "dist", "build"]
+collect_ignore = ["**/*deprecated*"]
 
 [tool.tox]
 legacy_tox_ini = """
@@ -234,7 +276,8 @@ logging-modules="logging"
 notes= [
     "FIXME",
     "XXX",
-    "TODO"
+    "TODO",
+    "DEVNOTE"
 ]
 
 [tool.pylint.'SIMILARITIES']
@@ -313,3 +356,16 @@ overgeneral-exceptions= [
     "BaseException",
     "Exception"
 ]
+
+# Versioning settings with hatch and hatch-vcs
+[tool.hatch.version]
+source = "vcs"
+raw-options = { local_scheme = "no-local-version"} 
+
+# DEVNOTE: search_parent_directories = true enables the project to be in a subfolder
+
+[tool.hatch.build.hooks.vcs]
+version-file = "_version.py"
+
+[tool.hatch.build.targets.sdist]
+only-include = []
